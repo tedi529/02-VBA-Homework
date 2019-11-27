@@ -1,0 +1,112 @@
+Attribute VB_Name = "Module1"
+Sub VBAStocks1()
+
+For Each ws In Worksheets
+
+'Write headings for information to be extracted
+    ws.Range("I1") = "Ticker"
+    ws.Range("J1") = "Yearly Price Change"
+    ws.Range("K1") = "Yearly Percent Change"
+    ws.Range("L1") = "Total Volume"
+    ws.Range("O1") = "Ticker"
+    ws.Range("P1") = "Value"
+    
+    ws.Range("N2") = "Greatest % Increase"
+    ws.Range("N3") = "Greatest % Decrease"
+    ws.Range("N4") = "Greatest Total Volume"
+
+'Loop through stocks in column A to extract ticker
+    Dim lastrow As Long
+    lastrow = ws.Cells(Rows.Count, 1).End(xlUp).Row
+    Dim startrow As Long
+    startrow = 2
+    
+        For i = 2 To lastrow
+            If ws.Cells(i, 1) <> ws.Cells(i + 1, 1) Then
+                ws.Cells(startrow, 9) = ws.Cells(i, 1)
+                startrow = startrow + 1
+            End If
+        Next i
+    
+'Calculate yearly price change, percent change and total volume of each stock
+'Change color of cells based on positive or negative price change
+    Dim ticker As String
+    Dim firstint As Double
+    Dim lastint As Double
+    Dim pricechange As Double
+    Dim percentchange As Double
+    Dim totalvolume As Double
+        
+        For i = 2 To lastrow
+            If ws.Cells(i, 9) <> ws.Cells(i + 1, 9) Then                                                                            'If current row does not equal next row
+                ticker = ws.Cells(i, 9)                                                                                             'Ticker is current row
+                firstint = ws.Range("A:A").Find(what:=ticker, after:=Range("A1")).Row                                               'Find row of first instance of ticker in data
+                lastint = ws.Range("A:A").Find(what:=ticker, after:=Range("A1"), LookAt:=xlWhole, SearchDirection:=xlPrevious).Row  'Find row of last instance of ticker in data
+                    
+                'Pricechange is value of last cell - value of first cell
+                pricechange = ws.Cells(lastint, 6).Value - ws.Cells(firstint, 3).Value
+                ws.Cells(i, 10) = pricechange
+                
+                    If pricechange >= 0 Then
+                        ws.Cells(i, 10).Interior.ColorIndex = 4
+        
+                    Else:
+                        ws.Cells(i, 10).Interior.ColorIndex = 3
+        
+                    End If
+                
+                'Percent change calculation
+                percentchange = (ws.Cells(lastint, 6).Value - ws.Cells(firstint, 3).Value) / ws.Cells(firstint, 3).Value
+                ws.Cells(i, 11) = percentchange
+                ws.Range("K:K").NumberFormat = "0.00%"
+                    
+                    If ws.Cells(firstint, 3).Value = 0 And ws.Cells(lastint, 6).Value = 0 Then
+                        percentchange = 0
+                        
+                    ElseIf ws.Cells(firstint, 3).Value = 0 Then
+                        percentchange = 1
+                        
+                    End If
+                 
+                'Calculate total volume by summing volume of each ticker
+                totalvolume = Application.Sum(ws.Range(ws.Cells(firstint, 7), ws.Cells(lastint, 7)))
+                ws.Cells(i, 12) = totalvolume
+            End If
+        Next i
+
+'THE BELOW CODE IS PART OF THE CHALLENGE EXERCISE
+'Find the value of the greatest increase, decrease and total volume
+    Dim lg_increase As Double
+    Dim lg_decrease As Double
+    Dim lg_volume As Double
+    
+    lg_increase = Application.WorksheetFunction.Max(ws.Range("K:K"))
+    lg_decrease = Application.WorksheetFunction.Min(ws.Range("K:K"))
+    lg_volume = Application.WorksheetFunction.Max(ws.Range("L:L"))
+            
+        ws.Range("P2") = lg_increase
+        ws.Range("P3") = lg_decrease
+        ws.Range("P2:P3").NumberFormat = "0.00%"
+            
+        ws.Range("P4") = lg_volume
+       
+'The below code is used to find the ticker of the values above.
+'The code gives back a 91 error, and upon speaking to Josh, decided to stop debugging at this point
+'I believe the reasoning is correct
+    
+    'Dim row_lgincrease As Double
+    'Dim row_lgdecrease As Double
+    'Dim row_lgvolume As Double
+    
+    'row_lgincrease = ws.Range("K:K").Find(what:=lg_increase, after:=Range("K1")).Row
+    'row_lgdecrease = ws.Range("K:K").Find(what:=lg_decrease, after:=Range("K1")).Row
+    'row_lgvolume = ws.Range("L:L").Find(what:=lg_volume, after:=Range("L1")).Row
+    
+        'ws.Range("O2") = Cells(row_lgincrease, 9)
+        'ws.Range("O3") = Cells(row_lgdecrease, 9)
+        'ws.Range("O4") = Cells(row_lgvolume, 9)
+       
+Next ws
+End Sub
+
+
